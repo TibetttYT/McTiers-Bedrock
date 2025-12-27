@@ -4,121 +4,56 @@
   <title>TTB – Tier Testing Bedrock</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body {
-      margin: 0;
-      font-family: Inter, Arial, sans-serif;
-      background: linear-gradient(180deg, #020617, #020617);
-      color: #e5e7eb;
-    }
-    header {
-      padding: 24px;
-      text-align: center;
-      background: #020617;
-      border-bottom: 1px solid #1e293b;
-    }
-    header h1 { margin: 0; font-size: 32px; }
-    header p { margin: 6px 0 0; color: #94a3b8; }.tiers {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
-  padding: 24px;
-  max-width: 1200px;
-  margin: auto;
-}
-
-.tier {
-  background: #020617;
-  border: 1px solid #1e293b;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.35);
-}
-
-.tier h2 { margin-top: 0; }
-
-.player {
-  background: #020617;
-  border: 1px solid #334155;
-  border-radius: 10px;
-  padding: 6px 10px;
-  margin: 6px 0;
-  font-size: 14px;
-}
-
-.admin-link {
-  position: fixed;
-  bottom: 8px;
-  right: 10px;
-  font-size: 11px;
-  opacity: 0.35;
-  color: #94a3b8;
-  text-decoration: none;
-}
-
-input, textarea, button {
-  background: #020617;
-  color: #e5e7eb;
-  border: 1px solid #334155;
-  border-radius: 10px;
-  padding: 8px;
-  width: 100%;
-  margin: 6px 0;
-}
-
-button {
-  cursor: pointer;
-  background: #2563eb;
-  border: none;
-  font-weight: bold;
-}
-
-button:hover { background: #1d4ed8; }
-
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    body { margin:0; font-family:'Inter',sans-serif; background:#0f172a; color:#e5e7eb; }
+    header { padding:24px; text-align:center; background:#020617; border-bottom:1px solid #1e293b; }
+    header h1 { margin:0; font-size:32px; }
+    header p { margin:6px 0 0; color:#94a3b8; }
+    .tiers { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:18px; padding:24px; max-width:1200px; margin:auto; }
+    .tier { background:#020617; border-radius:16px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.35); }
+    .tier h2 { margin-top:0; font-size:20px; }
+    .player { background:#1e293b; border-radius:10px; padding:8px 12px; margin:6px 0; cursor:grab; }
+    .player.dragging { opacity:0.5; }
+    .admin-link { position:fixed; bottom:10px; right:10px; font-size:12px; opacity:.4; color:#94a3b8; text-decoration:none; }
+    .admin-panel { position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:#020617; border:1px solid #334155; padding:24px; border-radius:16px; max-width:400px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,.5); display:none; z-index:1000; }
+    .admin-panel h2 { margin-top:0; }
+    .admin-panel button { background:#2563eb; border:none; color:white; padding:8px 16px; border-radius:10px; cursor:pointer; margin-top:10px; }
+    .overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.6); display:none; z-index:999; }
   </style>
 </head>
-<body><header>
+<body>
+<header>
   <h1>TTB</h1>
   <p>Tier Testing Bedrock</p>
-</header><section class="tiers" id="tiers"></section><a class="admin-link" href="?admin">admin</a>
-
+</header>
+<section class="tiers" id="tiers"></section>
+<a class="admin-link" href="#" id="adminBtn">admin</a>
+<div class="overlay" id="overlay"></div>
+<div class="admin-panel" id="adminPanel">
+  <h2>Admin Panel</h2>
+  <p>Drag & drop players to configure tiers</p>
+  <div id="adminContent"></div>
+  <button id="saveBtn">Save</button>
+</div>
 <script>
-  let data = JSON.parse(localStorage.getItem('tiers')) || {
-    "S-Tier": ["Player1", "Player2"],
+  const defaultData = {
+    "S-Tier": ["Player1","Player2"],
     "A-Tier": ["Player3"],
-    "B-Tier": []
+    "B-Tier": ["Player4"]
   };
+  let data = JSON.parse(localStorage.getItem('tiers')) || defaultData;const tiersContainer = document.getElementById('tiers'); function render() { tiersContainer.innerHTML = ''; for (const tier in data) { const tierDiv = document.createElement('div'); tierDiv.className = 'tier'; tierDiv.dataset.tier = tier; tierDiv.innerHTML = <h2>${tier}</h2>; data[tier].forEach(player => { const playerDiv = document.createElement('div'); playerDiv.className = 'player'; playerDiv.draggable = true; playerDiv.textContent = player; tierDiv.appendChild(playerDiv); }); tiersContainer.appendChild(tierDiv); } addDragDrop(); } render();
 
-  function render() {
-    const tiers = document.getElementById('tiers');
-    tiers.innerHTML = '';
-    for (const tier in data) {
-      const div = document.createElement('div');
-      div.className = 'tier';
-      div.innerHTML = `<h2>${tier}</h2>` + data[tier].map(p => `<div class='player'>${p}</div>`).join('');
-      tiers.appendChild(div);
-    }
-  }
+function addDragDrop() { const players = document.querySelectorAll('.player'); let dragged; players.forEach(p => { p.addEventListener('dragstart', e => { dragged = p; p.classList.add('dragging'); }); p.addEventListener('dragend', e => { dragged.classList.remove('dragging'); dragged = null; }); }); const tierDivs = document.querySelectorAll('.tier'); tierDivs.forEach(td => { td.addEventListener('dragover', e => e.preventDefault()); td.addEventListener('drop', e => { e.preventDefault(); if(dragged) { td.appendChild(dragged); saveDataFromDOM(); } }); }); }
 
-  render();
+function saveDataFromDOM() { const newData = {}; document.querySelectorAll('.tier').forEach(td => { newData[td.dataset.tier] = Array.from(td.querySelectorAll('.player')).map(p => p.textContent); }); data = newData; localStorage.setItem('tiers', JSON.stringify(data)); }
 
-  const params = new URLSearchParams(location.search);
-  if (params.has('admin')) {
-    const pw = prompt('Admin password');
-    if (pw === 'Tibetititi') {
-      document.body.innerHTML = `
-      <header><h1>Admin Panel</h1><p>TTB Configuration</p></header>
-      <div style="max-width:600px;margin:auto;padding:20px">
-        <textarea id="json" rows="15">${JSON.stringify(data, null, 2)}</textarea><button onclick="save()">Save</button>
-    <p style="font-size:12px;color:#94a3b8">Edit tiers as JSON. Saved locally.</p>
-  </div>`;
-} else {
-  alert('Wrong password');
-  location.href = location.pathname;
-}
+// Admin Panel const adminBtn = document.getElementById('adminBtn'); const adminPanel = document.getElementById('adminPanel'); const overlay = document.getElementById('overlay'); const saveBtn = document.getElementById('saveBtn');
 
-}
+adminBtn.addEventListener('click', () => { const pw = prompt('Admin password'); if(pw === 'Tibetititi') { adminPanel.style.display = 'block'; overlay.style.display = 'block'; renderAdminPanel(); } else { alert('Wrong password'); } }); overlay.addEventListener('click', () => { adminPanel.style.display = 'none'; overlay.style.display = 'none'; });
 
-function save() { try { const v = JSON.parse(document.getElementById('json').value); localStorage.setItem('tiers', JSON.stringify(v)); alert('Saved'); } catch { alert('Invalid JSON'); } } </script>
+function renderAdminPanel() { const content = document.getElementById('adminContent'); content.innerHTML = ''; for (const tier in data) { const div = document.createElement('div'); div.className = 'tier'; div.dataset.tier = tier; div.innerHTML = <h2>${tier}</h2>; data[tier].forEach(player => { const playerDiv = document.createElement('div'); playerDiv.className = 'player'; playerDiv.draggable = true; playerDiv.textContent = player; div.appendChild(playerDiv); }); content.appendChild(div); } addDragDrop(); }
+
+saveBtn.addEventListener('click', () => { saveDataFromDOM(); alert('Saved!'); adminPanel.style.display='none'; overlay.style.display='none'; render(); }); </script>
 
 </body>
 </html>
