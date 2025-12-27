@@ -1,0 +1,124 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TTB – Tier Testing Bedrock</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      background: linear-gradient(180deg, #020617, #020617);
+      color: #e5e7eb;
+    }
+    header {
+      padding: 24px;
+      text-align: center;
+      background: #020617;
+      border-bottom: 1px solid #1e293b;
+    }
+    header h1 { margin: 0; font-size: 32px; }
+    header p { margin: 6px 0 0; color: #94a3b8; }.tiers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  padding: 24px;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.tier {
+  background: #020617;
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+.tier h2 { margin-top: 0; }
+
+.player {
+  background: #020617;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 6px 10px;
+  margin: 6px 0;
+  font-size: 14px;
+}
+
+.admin-link {
+  position: fixed;
+  bottom: 8px;
+  right: 10px;
+  font-size: 11px;
+  opacity: 0.35;
+  color: #94a3b8;
+  text-decoration: none;
+}
+
+input, textarea, button {
+  background: #020617;
+  color: #e5e7eb;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 8px;
+  width: 100%;
+  margin: 6px 0;
+}
+
+button {
+  cursor: pointer;
+  background: #2563eb;
+  border: none;
+  font-weight: bold;
+}
+
+button:hover { background: #1d4ed8; }
+
+  </style>
+</head>
+<body><header>
+  <h1>TTB</h1>
+  <p>Tier Testing Bedrock</p>
+</header><section class="tiers" id="tiers"></section><a class="admin-link" href="?admin">admin</a>
+
+<script>
+  let data = JSON.parse(localStorage.getItem('tiers')) || {
+    "S-Tier": ["Player1", "Player2"],
+    "A-Tier": ["Player3"],
+    "B-Tier": []
+  };
+
+  function render() {
+    const tiers = document.getElementById('tiers');
+    tiers.innerHTML = '';
+    for (const tier in data) {
+      const div = document.createElement('div');
+      div.className = 'tier';
+      div.innerHTML = `<h2>${tier}</h2>` + data[tier].map(p => `<div class='player'>${p}</div>`).join('');
+      tiers.appendChild(div);
+    }
+  }
+
+  render();
+
+  const params = new URLSearchParams(location.search);
+  if (params.has('admin')) {
+    const pw = prompt('Admin password');
+    if (pw === 'Tibetititi') {
+      document.body.innerHTML = `
+      <header><h1>Admin Panel</h1><p>TTB Configuration</p></header>
+      <div style="max-width:600px;margin:auto;padding:20px">
+        <textarea id="json" rows="15">${JSON.stringify(data, null, 2)}</textarea><button onclick="save()">Save</button>
+    <p style="font-size:12px;color:#94a3b8">Edit tiers as JSON. Saved locally.</p>
+  </div>`;
+} else {
+  alert('Wrong password');
+  location.href = location.pathname;
+}
+
+}
+
+function save() { try { const v = JSON.parse(document.getElementById('json').value); localStorage.setItem('tiers', JSON.stringify(v)); alert('Saved'); } catch { alert('Invalid JSON'); } } </script>
+
+</body>
+</html>
