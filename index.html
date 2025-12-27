@@ -9,15 +9,18 @@ body { margin:0; font-family:'Inter',sans-serif; background:#0f172a; color:#e5e7
 header { padding:24px; text-align:center; background:#020617; border-bottom:1px solid #1e293b; }
 header h1 { margin:0; font-size:32px; }
 header p { margin:6px 0 0; color:#94a3b8; }
-.tiers { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:18px; padding:24px; max-width:1200px; margin:auto; }
-.tier { background:#020617; border-radius:16px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.35); }
-.tier h2 { margin-top:0; font-size:20px; }
-.player { background:#1e293b; border-radius:10px; padding:8px 12px; margin:6px 0; cursor:grab; }
+nav { display:flex; justify-content:center; gap:12px; padding:12px 0; background:#111827; }
+nav button { background:#1e293b; border:none; color:#e5e7eb; padding:8px 16px; border-radius:8px; cursor:pointer; }
+nav button.active { background:#2563eb; }
+.tiers { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:12px; padding:24px; max-width:1200px; margin:auto; }
+.tier { background:#020617; border-radius:12px; padding:12px; box-shadow:0 8px 20px rgba(0,0,0,.35); }
+.tier h2 { margin-top:0; font-size:18px; }
+.player { background:#1e293b; border-radius:8px; padding:6px 10px; margin:4px 0; cursor:grab; }
 .player.dragging { opacity:0.5; }
 .admin-link { position:fixed; bottom:10px; right:10px; font-size:12px; opacity:.4; color:#94a3b8; text-decoration:none; }
-.admin-panel { position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:#020617; border:1px solid #334155; padding:24px; border-radius:16px; max-width:400px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,.5); display:none; z-index:1000; }
+.admin-panel { position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:#020617; border:1px solid #334155; padding:20px; border-radius:12px; max-width:400px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,.5); display:none; z-index:1000; }
 .admin-panel h2 { margin-top:0; }
-.admin-panel button { background:#2563eb; border:none; color:white; padding:8px 16px; border-radius:10px; cursor:pointer; margin-top:10px; }
+.admin-panel button { background:#2563eb; border:none; color:white; padding:8px 16px; border-radius:8px; cursor:pointer; margin-top:10px; }
 .overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.6); display:none; z-index:999; }
 </style>
 </head>
@@ -26,6 +29,12 @@ header p { margin:6px 0 0; color:#94a3b8; }
 <h1>TTB</h1>
 <p>Tier Testing Bedrock</p>
 </header>
+<nav id="menu">
+<button data-tab="Bedrock" class="active">Bedrock</button>
+<button data-tab="UHC">UHC</button>
+<button data-tab="DiamondPot">Diamond Pot</button>
+<button data-tab="Leaderboard">Leaderboard</button>
+</nav>
 <section class="tiers" id="tiers"></section>
 <a class="admin-link" href="#" id="adminBtn">admin</a>
 <div class="overlay" id="overlay"></div>
@@ -35,25 +44,26 @@ header p { margin:6px 0 0; color:#94a3b8; }
 <div id="adminContent"></div>
 <button id="saveBtn">Save</button>
 </div>
-
 <script>
 const defaultData = {
-  "S-Tier":["Player1","Player2"],
-  "A-Tier":["Player3"],
-  "B-Tier":["Player4"]
+  Bedrock: {"S-Tier":["Player1","Player2"],"A-Tier":["Player3"],"B-Tier":["Player4"]},
+  UHC: {"S-Tier":["UHC1"],"A-Tier":["UHC2"],"B-Tier":["UHC3"]},
+  DiamondPot: {"S-Tier":["DP1"],"A-Tier":["DP2"],"B-Tier":["DP3"]},
+  Leaderboard: {"Top":["L1","L2","L3"]}
 };
+let activeTab = 'Bedrock';
 let data = JSON.parse(localStorage.getItem('tiers')) || defaultData;
-
 const tiersContainer = document.getElementById('tiers');
 
 function render() {
   tiersContainer.innerHTML = '';
-  for (const tier in data) {
+  const tabData = data[activeTab];
+  for (const tier in tabData) {
     const tierDiv = document.createElement('div');
     tierDiv.className = 'tier';
     tierDiv.dataset.tier = tier;
     tierDiv.innerHTML = `<h2>${tier}</h2>`;
-    data[tier].forEach(player=>{
+    tabData[tier].forEach(player=>{
       const playerDiv=document.createElement('div');
       playerDiv.className='player';
       playerDiv.draggable=true;
@@ -87,7 +97,7 @@ function saveData() {
   document.querySelectorAll('.tier').forEach(td=>{
     newData[td.dataset.tier]=Array.from(td.querySelectorAll('.player')).map(p=>p.textContent);
   });
-  data=newData;
+  data[activeTab]=newData;
   localStorage.setItem('tiers',JSON.stringify(data));
 }
 
@@ -106,12 +116,13 @@ overlay.addEventListener('click',()=>{adminPanel.style.display='none';overlay.st
 function renderAdminPanel(){
   const content=document.getElementById('adminContent');
   content.innerHTML='';
-  for(const tier in data){
+  const tabData = data[activeTab];
+  for(const tier in tabData){
     const div=document.createElement('div');
     div.className='tier';
     div.dataset.tier=tier;
     div.innerHTML=`<h2>${tier}</h2>`;
-    data[tier].forEach(player=>{
+    tabData[tier].forEach(player=>{
       const playerDiv=document.createElement('div');
       playerDiv.className='player';
       playerDiv.draggable=true;
@@ -129,6 +140,15 @@ saveBtn.addEventListener('click',()=>{
   adminPanel.style.display='none';
   overlay.style.display='none';
   render();
+});
+
+document.querySelectorAll('#menu button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#menu button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTab = btn.dataset.tab;
+    render();
+  });
 });
 
 render();
