@@ -5,19 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TTB – Tier Testing Bedrock</title>
 <style>
-body { margin:0; font-family:'Inter',sans-serif; background:#0f172a; color:#e5e7eb; }
+body { margin:0; font-family:'Inter',sans-serif; background:rgba(0,50,0,0.7); color:#e5e7eb; }
 header { padding:20px; text-align:center; background:#020617; border-bottom:1px solid #1e293b; }
 header h1 { margin:0; font-size:28px; }
 header p { margin:4px 0 0; color:#94a3b8; }
-nav { display:flex; justify-content:center; gap:10px; padding:10px 0; background:#111827; }
+nav { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; padding:10px 0; background:#111827; }
 nav button { background:#1e293b; border:none; color:#e5e7eb; padding:6px 12px; border-radius:6px; cursor:pointer; transition:0.2s; }
 nav button:hover { background:#2563eb; }
 nav button.active { background:#2563eb; }
-.tiers { display:grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap:10px; padding:20px; max-width:1200px; margin:auto; }
+.tiers { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:10px; padding:20px; max-width:1200px; margin:auto; }
 .tier { border-radius:10px; padding:12px; box-shadow:0 6px 18px rgba(0,0,0,.3); transition:0.2s; }
 .tier:hover { transform:translateY(-3px); }
 .tier h2 { margin:0 0 6px; font-size:16px; }
-.player { border-radius:6px; padding:4px 8px; margin:4px 0; cursor:grab; transition:0.2s; }
+.player { border-radius:6px; padding:4px 6px; margin:4px 0; cursor:grab; transition:0.2s; background:#1e293b; }
 .player.dragging { opacity:0.5; }
 .admin-link { position:fixed; bottom:10px; right:10px; font-size:12px; opacity:.4; color:#94a3b8; text-decoration:none; }
 .admin-panel { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#020617; border:1px solid #334155; padding:20px; border-radius:10px; max-width:400px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,.5); display:none; z-index:1000; }
@@ -32,9 +32,15 @@ nav button.active { background:#2563eb; }
 <p>Tier Testing Bedrock</p>
 </header>
 <nav id="menu">
-<button data-tab="Bedrock" class="active">Bedrock</button>
+<button data-tab="Sword" class="active">Sword</button>
 <button data-tab="UHC">UHC</button>
+<button data-tab="Crystal">Crystal</button>
+<button data-tab="Spear">Spear</button>
+<button data-tab="Axe">Axe</button>
 <button data-tab="DiamondPot">Diamond Pot</button>
+<button data-tab="NetheritePot">Netherite Pot</button>
+<button data-tab="Mace">Mace</button>
+<button data-tab="SMP">SMP</button>
 <button data-tab="Leaderboard">Leaderboard</button>
 </nav>
 <section class="tiers" id="tiers"></section>
@@ -47,49 +53,52 @@ nav button.active { background:#2563eb; }
 <button id="saveBtn">Save</button>
 </div>
 <script>
-const defaultData = {
-  Bedrock: {"S-Tier":["Player1","Player2"],"A-Tier":["Player3"],"B-Tier":["Player4"],"C-Tier":["Player5"]},
-  UHC: {"S-Tier":["UHC1"],"A-Tier":["UHC2"],"B-Tier":["UHC3"],"C-Tier":["UHC4"]},
-  DiamondPot: {"S-Tier":["DP1"],"A-Tier":["DP2"],"B-Tier":["DP3"],"C-Tier":["DP4"]},
-  Leaderboard: {"Top":["L1","L2","L3","L4"]}
-};
-const tierColors = { "S-Tier":"gold", "A-Tier":"limegreen", "B-Tier":"deepskyblue", "C-Tier":"violet", "Top":"orange" };
-let activeTab = 'Bedrock';
+const gamemodes = ["Sword","UHC","Crystal","Spear","Axe","DiamondPot","NetheritePot","Mace","SMP","Leaderboard"];
+const defaultTiers = ["HT1","HT2","LT1","LT2"];
+const defaultData = {};
+gamemodes.forEach(mode=>{
+  defaultData[mode]={};
+  defaultTiers.forEach(tier=>{
+    defaultData[mode][tier]=[tier+"Player1",tier+"Player2"];
+  });
+});
 let data = JSON.parse(localStorage.getItem('tiers')) || defaultData;
+let activeTab = "Sword";
 const tiersContainer = document.getElementById('tiers');
+const tierColors = {"HT1":"gold","HT2":"limegreen","LT1":"deepskyblue","LT2":"violet"};
 
-function render() {
+function render(){
   tiersContainer.innerHTML='';
   const tabData = data[activeTab];
   for(const tier in tabData){
-    const tierDiv = document.createElement('div');
-    tierDiv.className='tier';
-    tierDiv.style.background=tierColors[tier] || '#020617';
-    tierDiv.dataset.tier=tier;
-    tierDiv.innerHTML=`<h2>${tier}</h2>`;
+    const div=document.createElement('div');
+    div.className='tier';
+    div.dataset.tier=tier;
+    div.style.background=tierColors[tier] || '#020617';
+    div.innerHTML=`<h2>${tier}</h2>`;
     tabData[tier].forEach(player=>{
       const pDiv=document.createElement('div');
       pDiv.className='player';
       pDiv.draggable=true;
       pDiv.textContent=player;
-      pDiv.style.background='#1e293b';
-      tierDiv.appendChild(pDiv);
+      // Spieler umbenennen per Doppelklick
+      pDiv.addEventListener('dblclick',()=>{const n=prompt("Enter new player name:",pDiv.textContent);if(n)pDiv.textContent=n;});
+      div.appendChild(pDiv);
     });
-    tiersContainer.appendChild(tierDiv);
+    tiersContainer.appendChild(div);
   }
   addDragDrop();
 }
 
 function addDragDrop(){
-  const players=document.querySelectorAll('.player');
   let dragged;
-  players.forEach(p=>{
+  document.querySelectorAll('.player').forEach(p=>{
     p.addEventListener('dragstart',()=>{dragged=p;p.classList.add('dragging');});
     p.addEventListener('dragend',()=>{dragged.classList.remove('dragging');dragged=null;});
   });
   document.querySelectorAll('.tier').forEach(td=>{
     td.addEventListener('dragover',e=>e.preventDefault());
-    td.addEventListener('drop',e=>{e.preventDefault();if(dragged){td.appendChild(dragged);saveData();}});
+    td.addEventListener('drop',e=>{if(dragged){td.appendChild(dragged);saveData();}});
   });
 }
 
@@ -129,12 +138,7 @@ function renderAdminPanel(){
       pDiv.className='player';
       pDiv.draggable=true;
       pDiv.textContent=player;
-      pDiv.style.background='#1e293b';
-      // Spieler umbenennen per Doppelklick
-      pDiv.addEventListener('dblclick',()=>{
-        const newName = prompt('Enter new player name:', pDiv.textContent);
-        if(newName) pDiv.textContent = newName;
-      });
+      pDiv.addEventListener('dblclick',()=>{const n=prompt("Enter new player name:",pDiv.textContent);if(n)pDiv.textContent=n;});
       div.appendChild(pDiv);
     });
     content.appendChild(div);
