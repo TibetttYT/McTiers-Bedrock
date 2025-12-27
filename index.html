@@ -1,8 +1,8 @@
 <!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TTB – Tier Testing Bedrock</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
     body { margin:0; font-family:'Inter',sans-serif; background:#0f172a; color:#e5e7eb; }
@@ -36,24 +36,30 @@
   <button id="saveBtn">Save</button>
 </div>
 <script>
-  const defaultData = {
-    "S-Tier": ["Player1","Player2"],
-    "A-Tier": ["Player3"],
-    "B-Tier": ["Player4"]
-  };
-  let data = JSON.parse(localStorage.getItem('tiers')) || defaultData;const tiersContainer = document.getElementById('tiers'); function render() { tiersContainer.innerHTML = ''; for (const tier in data) { const tierDiv = document.createElement('div'); tierDiv.className = 'tier'; tierDiv.dataset.tier = tier; tierDiv.innerHTML = <h2>${tier}</h2>; data[tier].forEach(player => { const playerDiv = document.createElement('div'); playerDiv.className = 'player'; playerDiv.draggable = true; playerDiv.textContent = player; tierDiv.appendChild(playerDiv); }); tiersContainer.appendChild(tierDiv); } addDragDrop(); } render();
+const defaultData = {
+  "S-Tier": ["Player1","Player2"],
+  "A-Tier": ["Player3"],
+  "B-Tier": ["Player4"]
+};
+let data = JSON.parse(localStorage.getItem('tiers')) || defaultData;const tiersContainer = document.getElementById('tiers');
 
-function addDragDrop() { const players = document.querySelectorAll('.player'); let dragged; players.forEach(p => { p.addEventListener('dragstart', e => { dragged = p; p.classList.add('dragging'); }); p.addEventListener('dragend', e => { dragged.classList.remove('dragging'); dragged = null; }); }); const tierDivs = document.querySelectorAll('.tier'); tierDivs.forEach(td => { td.addEventListener('dragover', e => e.preventDefault()); td.addEventListener('drop', e => { e.preventDefault(); if(dragged) { td.appendChild(dragged); saveDataFromDOM(); } }); }); }
+function render() { tiersContainer.innerHTML = ''; for (const tier in data) { const tierDiv = document.createElement('div'); tierDiv.className = 'tier'; tierDiv.dataset.tier = tier; tierDiv.innerHTML = <h2>${tier}</h2>; data[tier].forEach(player => { const playerDiv = document.createElement('div'); playerDiv.className = 'player'; playerDiv.draggable = true; playerDiv.textContent = player; tierDiv.appendChild(playerDiv); }); tiersContainer.appendChild(tierDiv); } addDragDrop(); }
 
-function saveDataFromDOM() { const newData = {}; document.querySelectorAll('.tier').forEach(td => { newData[td.dataset.tier] = Array.from(td.querySelectorAll('.player')).map(p => p.textContent); }); data = newData; localStorage.setItem('tiers', JSON.stringify(data)); }
+function addDragDrop() { const players = document.querySelectorAll('.player'); let dragged; players.forEach(p => { p.addEventListener('dragstart', e => { dragged = p; p.classList.add('dragging'); }); p.addEventListener('dragend', e => { dragged.classList.remove('dragging'); dragged = null; }); }); const tierDivs = document.querySelectorAll('.tier'); tierDivs.forEach(td => { td.addEventListener('dragover', e => e.preventDefault()); td.addEventListener('drop', e => { e.preventDefault(); if(dragged) { td.appendChild(dragged); saveData(); } }); }); }
 
-// Admin Panel const adminBtn = document.getElementById('adminBtn'); const adminPanel = document.getElementById('adminPanel'); const overlay = document.getElementById('overlay'); const saveBtn = document.getElementById('saveBtn');
+function saveData() { const newData = {}; document.querySelectorAll('.tier').forEach(td => { newData[td.dataset.tier] = Array.from(td.querySelectorAll('.player')).map(p => p.textContent); }); data = newData; localStorage.setItem('tiers', JSON.stringify(data)); }
 
-adminBtn.addEventListener('click', () => { const pw = prompt('Admin password'); if(pw === 'Tibetititi') { adminPanel.style.display = 'block'; overlay.style.display = 'block'; renderAdminPanel(); } else { alert('Wrong password'); } }); overlay.addEventListener('click', () => { adminPanel.style.display = 'none'; overlay.style.display = 'none'; });
+const adminBtn = document.getElementById('adminBtn'); const adminPanel = document.getElementById('adminPanel'); const overlay = document.getElementById('overlay'); const saveBtn = document.getElementById('saveBtn');
+
+adminBtn.addEventListener('click', () => { const pw = prompt('Admin password'); if(pw === 'Tibetititi') { adminPanel.style.display='block'; overlay.style.display='block'; renderAdminPanel(); } else { alert('Wrong password'); } });
+
+overlay.addEventListener('click', () => { adminPanel.style.display='none'; overlay.style.display='none'; });
 
 function renderAdminPanel() { const content = document.getElementById('adminContent'); content.innerHTML = ''; for (const tier in data) { const div = document.createElement('div'); div.className = 'tier'; div.dataset.tier = tier; div.innerHTML = <h2>${tier}</h2>; data[tier].forEach(player => { const playerDiv = document.createElement('div'); playerDiv.className = 'player'; playerDiv.draggable = true; playerDiv.textContent = player; div.appendChild(playerDiv); }); content.appendChild(div); } addDragDrop(); }
 
-saveBtn.addEventListener('click', () => { saveDataFromDOM(); alert('Saved!'); adminPanel.style.display='none'; overlay.style.display='none'; render(); }); </script>
+saveBtn.addEventListener('click', () => { saveData(); alert('Saved!'); adminPanel.style.display='none'; overlay.style.display='none'; render(); });
+
+render(); </script>
 
 </body>
 </html>
